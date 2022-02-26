@@ -1,0 +1,20 @@
+<?php
+
+namespace Test;
+
+use Test\Baz\Fuga;
+
+class Test 
+{
+    private $fuga;
+
+    public function __constructor(Fuga $fuga): void
+    {
+        $this->fuga = $fuga;
+    }
+
+    public function getFuga(): Fuga
+    {
+        return $this->fuga;
+    }
+}

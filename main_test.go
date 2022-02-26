@@ -355,3 +355,81 @@ func Test_phpFilePaths(t *testing.T) {
 		})
 	}
 }
+
+func Test_dict_add(t *testing.T) {
+	type args struct {
+		variable string
+	}
+	tests := []struct {
+		name string
+		d    *dict
+		args args
+		want map[string]bool
+	}{
+		{
+			name: "dict.valueに文字列を追加できる",
+			d: func() *dict {
+				return newDict()
+			}(),
+			args: args{
+				variable: "poco",
+			},
+			want: map[string]bool{"poco": true},
+		},
+		{
+			name: "dict.valueに既に存在する文字列は追加されない",
+			d: func() *dict {
+				d := newDict()
+				d.add("poco")
+				return d
+			}(),
+			args: args{
+				variable: "poco",
+			},
+			want: map[string]bool{"poco": true},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.d.add(tt.args.variable)
+			got := tt.d.value
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("dict.add() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_dict_sortValue(t *testing.T) {
+	tests := []struct {
+		name string
+		d    *dict
+		want []string
+	}{
+		{
+			name: "dict.valueをソートしてスライスとして返せる",
+			d: func() *dict {
+				d := newDict()
+				d.add("wham!")
+				d.add("acdc")
+				d.add("cars")
+				return d
+			}(),
+			want: []string{
+				"acdc",
+				"cars",
+				"wham!",
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			sorted := tt.d.sortValue()
+			for i, got := range sorted {
+				if got != tt.want[i] {
+					t.Errorf("dict.sortValue() = %v, want %v", got, tt.want[i])
+				}
+			}
+		})
+	}
+}

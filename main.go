@@ -4,7 +4,9 @@ import (
 	"io/ioutil"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strings"
+	"sync"
 )
 
 func isPhpFile(s string) bool {
@@ -63,4 +65,34 @@ func phpFilePaths(inDir, exclude string) ([]string, error) {
 		phps = append(phps, p)
 	}
 	return phps, nil
+}
+
+type dict struct {
+	value map[string]bool
+	mux   sync.Mutex
+}
+
+func newDict() *dict {
+	return &dict{
+		value: make(map[string]bool),
+	}
+}
+
+func (d *dict) add(variable string) {
+	d.mux.Lock()
+	if _, ok := d.value[variable]; !ok {
+		d.value[variable] = true
+	}
+	d.mux.Unlock()
+}
+
+func (d *dict) sortValue() []string {
+	d.mux.Lock()
+	defer d.mux.Unlock()
+	keys := make([]string, 0, len(d.value))
+	for k := range d.value {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	return keys
 }

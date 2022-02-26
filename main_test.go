@@ -204,7 +204,7 @@ func Test_removeSymbolFromVariable(t *testing.T) {
 
 func Test_filePaths(t *testing.T) {
 	type args struct {
-		in      string
+		inDir   string
 		exclude string
 	}
 	tests := []struct {
@@ -216,7 +216,7 @@ func Test_filePaths(t *testing.T) {
 		{
 			name: "指定したディレクトリを再帰的に探索してすべてのファイルパスをスライスとして返せる",
 			args: args{
-				in:      "testdata",
+				inDir:   "testdata",
 				exclude: "",
 			},
 			want: []string{
@@ -232,7 +232,7 @@ func Test_filePaths(t *testing.T) {
 		{
 			name: "指定したディレクトリを再帰的に探索して除外ディレクトリ中のファイルを除きすべてのファイルパスをスライスとして返せる",
 			args: args{
-				in:      "testdata",
+				inDir:   "testdata",
 				exclude: "vendor",
 			},
 			want: []string{
@@ -246,7 +246,7 @@ func Test_filePaths(t *testing.T) {
 		{
 			name: "指定したディレクトリを再帰的に探索して除外ファイルを除きすべてのファイルパスをスライスとして返せる",
 			args: args{
-				in:      "testdata",
+				inDir:   "testdata",
 				exclude: "Exclude1.php",
 			},
 			want: []string{
@@ -261,7 +261,7 @@ func Test_filePaths(t *testing.T) {
 		{
 			name: "存在しないディレクトリを指定した時エラーを返せる",
 			args: args{
-				in:      "heavensdoor",
+				inDir:   "heavensdoor",
 				exclude: "",
 			},
 			want:    nil,
@@ -270,13 +270,87 @@ func Test_filePaths(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := filePaths(tt.args.in, tt.args.exclude)
+			got, err := filePaths(tt.args.inDir, tt.args.exclude)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("filePaths() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("filePaths() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_phpFilePaths(t *testing.T) {
+	type args struct {
+		inDir   string
+		exclude string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    []string
+		wantErr bool
+	}{
+		{
+			name: "指定したディレクトリを再帰的に探索してすべてのphpのファイルパスをスライスとして返せる",
+			args: args{
+				inDir:   "testdata",
+				exclude: "",
+			},
+			want: []string{
+				"testdata/README.php",
+				"testdata/src/Test.php",
+				"testdata/vendor/Exclude1.php",
+				"testdata/vendor/Exclude2.php",
+			},
+			wantErr: false,
+		},
+		{
+			name: "指定したディレクトリを再帰的に探索して除外ディレクトリ中のファイルを除きすべてのphpのファイルパスをスライスとして返せる",
+			args: args{
+				inDir:   "testdata",
+				exclude: "vendor",
+			},
+			want: []string{
+				"testdata/README.php",
+				"testdata/src/Test.php",
+			},
+			wantErr: false,
+		},
+		{
+			name: "指定したディレクトリを再帰的に探索して除外ファイルを除きすべてのphpのファイルパスをスライスとして返せる",
+			args: args{
+				inDir:   "testdata",
+				exclude: "Exclude1.php",
+			},
+			want: []string{
+				"testdata/README.php",
+				"testdata/src/Test.php",
+				"testdata/vendor/Exclude2.php",
+			},
+			wantErr: false,
+		},
+		{
+			name: "存在しないディレクトリを指定した時エラーを返せる",
+			args: args{
+				inDir:   "cheaptrick",
+				exclude: "",
+			},
+			want:    nil,
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := phpFilePaths(tt.args.inDir, tt.args.exclude)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("phpFilePaths() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("phpFilePaths() = %v, want %v", got, tt.want)
 			}
 		})
 	}

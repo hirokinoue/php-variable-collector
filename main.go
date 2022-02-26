@@ -49,3 +49,18 @@ func filePaths(inDir, exclude string) ([]string, error) {
 	}
 	return paths, nil
 }
+
+func phpFilePaths(inDir, exclude string) ([]string, error) {
+	paths, err := filePaths(inDir, exclude)
+	if err != nil {
+		return nil, err
+	}
+	var phps []string
+	for _, p := range paths {
+		if !isPhpFile(p) {
+			continue
+		}
+		phps = append(phps, p)
+	}
+	return phps, nil
+}

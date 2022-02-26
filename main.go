@@ -1,6 +1,7 @@
 package main
 
 import (
+	"regexp"
 	"strings"
 )
 
@@ -16,4 +17,9 @@ func isPhpVariable(s string) bool {
 		return false
 	}
 	return true
+}
+
+func removeSymbolFromVariable(s string) string {
+	sub := regexp.MustCompile(`[\[\]\.,;!"')(:%+-]`).Split(s, -1)
+	return sub[0]
 }

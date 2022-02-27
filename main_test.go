@@ -2,6 +2,7 @@ package main
 
 import (
 	"reflect"
+	"runtime"
 	"testing"
 )
 
@@ -428,6 +429,63 @@ func Test_dict_sortValue(t *testing.T) {
 			for i, got := range sorted {
 				if got != tt.want[i] {
 					t.Errorf("dict.sortValue() = %v, want %v", got, tt.want[i])
+				}
+			}
+		})
+	}
+}
+
+func Test_collectPhpVariable(t *testing.T) {
+	type args struct {
+		filePath string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    []string
+		wantErr bool
+	}{
+		{
+			name: "指定したファイルからPHPの変数を取り出してスライスとして返せる",
+			args: args{
+				filePath: "testdata/README.php",
+			},
+			want:    []string{"$readmePhp", "$foo"},
+			wantErr: false,
+		},
+		{
+			name: "存在しないディレクトリを指定した時エラーを返せる",
+			args: args{
+				filePath: "highway/star.php",
+			},
+			want:    nil,
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		ch := make(chan []string)
+		e := make(chan error)
+		semaphore := make(chan struct{}, runtime.NumCPU())
+		defer func() {
+			close(ch)
+			close(e)
+			close(semaphore)
+		}()
+
+		t.Run(tt.name, func(t *testing.T) {
+			go collectPhpVariable(tt.args.filePath, ch, e, semaphore)
+			select {
+			case got := <-ch:
+				if tt.wantErr != false {
+					t.Errorf("collectPhpVariable() = %v, want error", got)
+					return
+				}
+				if !reflect.DeepEqual(got, tt.want) {
+					t.Errorf("collectPhpVariable() = %v, want %v", got, tt.want)
+				}
+			case err := <-e:
+				if tt.wantErr == false || tt.want != nil {
+					t.Errorf("collectPhpVariable() error = %v, wantErr %v", err, tt.wantErr)
 				}
 			}
 		})

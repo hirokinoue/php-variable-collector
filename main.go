@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bufio"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"regexp"
 	"sort"
@@ -95,4 +97,28 @@ func (d *dict) sortValue() []string {
 	}
 	sort.Strings(keys)
 	return keys
+}
+
+func collectPhpVariable(filePath string, ch chan<- []string, e chan<- error, semaphore chan struct{}) {
+	semaphore <- struct{}{}
+	defer func() {
+		<-semaphore
+	}()
+	f, err := os.Open(filePath)
+	if err != nil {
+		e <- err
+		return
+	}
+	defer f.Close()
+	scanner := bufio.NewScanner(f)
+	var strs []string
+	for scanner.Scan() {
+		words := strings.Split(scanner.Text(), " ")
+		for _, w := range words {
+			if isPhpVariable(w) {
+				strs = append(strs, removeSymbolFromVariable(w))
+			}
+		}
+	}
+	ch <- strs
 }

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"os"
 	"reflect"
 	"runtime"
 	"testing"
@@ -487,6 +488,53 @@ func Test_collectPhpVariable(t *testing.T) {
 				if tt.wantErr == false || tt.want != nil {
 					t.Errorf("collectPhpVariable() error = %v, wantErr %v", err, tt.wantErr)
 				}
+			}
+		})
+	}
+}
+
+func Test_writeFile(t *testing.T) {
+	type args struct {
+		line string
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		{
+			name: "ファイルが存在しない場合、新規作成して文字列を書き込める",
+			args: args{
+				line: "How many slices of bread have you ever eaten?",
+			},
+			want: "How many slices of bread have you ever eaten?\n",
+		},
+		{
+			name: "ファイルが存在する場合、文字列を追記できる",
+			args: args{
+				line: "UREYYYYY",
+			},
+			want: "How many slices of bread have you ever eaten?\nUREYYYYY\n",
+		},
+	}
+	tmp, err := os.CreateTemp(os.TempDir(), "__")
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	tmpFile := tmp.Name()
+	os.Remove(tmpFile)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := writeFile(tmpFile, tt.args.line); err != nil {
+				t.Errorf("writeFile() error = %v, wantErr %v", err, false)
+			}
+			content, err := os.ReadFile(tmpFile)
+			if err != nil {
+				t.Fatal(err.Error())
+			}
+			got := string(content)
+			if got != tt.want {
+				t.Errorf("writeFile() = %v, want %v", got, tt.want)
 			}
 		})
 	}

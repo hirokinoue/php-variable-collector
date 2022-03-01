@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -121,4 +122,18 @@ func collectPhpVariable(filePath string, ch chan<- []string, e chan<- error, sem
 		}
 	}
 	ch <- strs
+}
+
+func writeFile(outFilePath string, line string) error {
+	file, err1 := os.OpenFile(outFilePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	if err1 != nil {
+		return err1
+	}
+	defer file.Close()
+
+	_, err2 := file.WriteString(fmt.Sprintf("%s%s", line, "\n"))
+	if err2 != nil {
+		return err2
+	}
+	return nil
 }

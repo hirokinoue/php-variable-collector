@@ -137,3 +137,14 @@ func writeFile(outFilePath string, line string) error {
 	}
 	return nil
 }
+
+func clearOutDir(outDir string) error {
+	paths, err := filePaths(outDir, "")
+	if err != nil {
+		return err
+	}
+	for _, p := range paths {
+		os.Remove(p)
+	}
+	return nil
+}

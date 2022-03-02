@@ -2,6 +2,7 @@ package main
 
 import (
 	"os"
+	"path/filepath"
 	"reflect"
 	"runtime"
 	"testing"
@@ -535,6 +536,68 @@ func Test_writeFile(t *testing.T) {
 			got := string(content)
 			if got != tt.want {
 				t.Errorf("writeFile() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_clearOutDir(t *testing.T) {
+	type args struct {
+		outDir func() string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "指定したディレクトリ中のファイルをすべて削除できる",
+			args: args{
+				outDir: func() string {
+					name, err := os.MkdirTemp(os.TempDir(), "__")
+					if err != nil {
+						t.Fatal(err.Error())
+					}
+					createTempFile := func(dir string) {
+						_, err = os.CreateTemp(name, "__")
+						if err != nil {
+							t.Fatal(err.Error())
+						}
+					}
+					createTempFile(name)
+					createTempFile(name)
+					return name
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "存在しないディレクトリを指定した時エラーを返せる",
+			args: args{
+				outDir: func() string {
+					return filepath.Join(os.TempDir(), "fictitious_dir")
+				},
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		outDir := tt.args.outDir()
+		t.Run(tt.name, func(t *testing.T) {
+			if err := clearOutDir(outDir); (err != nil) != tt.wantErr {
+				t.Errorf("clearOutDir() error = %v, wantErr %v", err, tt.wantErr)
+			} else if err == nil {
+				files, err := os.ReadDir(outDir)
+				if err != nil {
+					t.Fatal(err.Error())
+				}
+				got := len(files)
+				if got != 0 {
+					t.Errorf("writeFile() = %v, want %v", got, 0)
+				}
+			}
+			if _, err := os.Stat(outDir); !os.IsNotExist(err) {
+				os.Remove(outDir)
 			}
 		})
 	}

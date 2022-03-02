@@ -523,6 +523,9 @@ func Test_writeFile(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 	tmpFile := tmp.Name()
+	defer func(path string) {
+		os.Remove(path)
+	}(tmpFile)
 	os.Remove(tmpFile)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

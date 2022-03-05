@@ -2,6 +2,7 @@ package main
 
 import (
 	"os"
+	"os/exec"
 	"path/filepath"
 	"reflect"
 	"runtime"
@@ -602,6 +603,85 @@ func Test_clearOutDir(t *testing.T) {
 			if _, err := os.Stat(outDir); !os.IsNotExist(err) {
 				os.Remove(outDir)
 			}
+		})
+	}
+}
+
+func Test_parseFlags(t *testing.T) {
+	type args struct {
+		flags []string
+	}
+	tests := []struct {
+		name  string
+		args  args
+		want0 string
+		want1 string
+		want2 string
+	}{
+		{
+			name: "フラグに設定した値をそのまま出力すること",
+			args: args{
+				flags: []string{"-exclude", "acdc", "-in", "cars", "-out", "wham!"},
+			},
+			want0: "cars",
+			want1: "wham!",
+			want2: "acdc",
+		},
+		{
+			name: "フラグに値を設定しない場合、デフォルト値を出力すること",
+			args: args{
+				flags: []string{},
+			},
+			want0: "in",
+			want1: "out",
+			want2: "",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got0, got1, got2 := parseFlags(tt.args.flags)
+			if got0 != tt.want0 {
+				t.Errorf("parseFlags() got0 = %v, want %v", got0, tt.want0)
+			}
+			if got1 != tt.want1 {
+				t.Errorf("parseFlags() got1 = %v, want %v", got1, tt.want1)
+			}
+			if got2 != tt.want2 {
+				t.Errorf("parseFlags() got2 = %v, want %v", got2, tt.want2)
+			}
+		})
+	}
+}
+
+func Test_parseFlags_abnormal(t *testing.T) {
+	type args struct {
+		flags []string
+	}
+	tests := []struct {
+		name string
+		args args
+	}{
+		{
+			name: "未定義のフラグを指定した場合、エラーになること",
+			args: args{
+				flags: []string{"-undefinedFlag", "santana"},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if os.Getenv("OS_EXIT_TEST") == "1" {
+				_, _, _ = parseFlags(tt.args.flags)
+				return
+			}
+			cmd := exec.Command(os.Args[0], "-test.run=Test_parseFlags_abnormal")
+			cmd.Env = append(os.Environ(), "OS_EXIT_TEST=1")
+			err := cmd.Run()
+			e, ok := err.(*exec.ExitError)
+			if ok && !e.Success() {
+				return
+			}
+			t.Errorf("parseFlags() %v, the type is %T, want *exec.ExitError", e, e)
 		})
 	}
 }

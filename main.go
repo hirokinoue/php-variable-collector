@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -147,4 +148,13 @@ func clearOutDir(outDir string) error {
 		os.Remove(p)
 	}
 	return nil
+}
+
+func parseFlags(args []string) (string, string, string) {
+	f := flag.NewFlagSet(os.Args[0], flag.ExitOnError)
+	inDir := f.String("in", "in", "入力ファイルを格納するディレクトリ")
+	outDir := f.String("out", "out", "処理結果が出力されるディレクトリ")
+	exclude := f.String("exclude", "", "処理しないファイルやディレクトリ")
+	f.Parse(args)
+	return *inDir, *outDir, *exclude
 }

@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -79,7 +78,7 @@ func removeSymbolFromVariable(s string) string {
 }
 
 func filePaths(inDir, exclude string) ([]string, error) {
-	files, err := ioutil.ReadDir(inDir)
+	files, err := os.ReadDir(inDir)
 	if err != nil {
 		return nil, err
 	}

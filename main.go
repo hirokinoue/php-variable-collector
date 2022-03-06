@@ -37,8 +37,8 @@ func main() {
 	}
 	for i := 0; i < len(paths); i++ {
 		select {
-		case strings := <-ch:
-			for _, s := range strings {
+		case strs := <-ch:
+			for _, s := range strs {
 				d.add(s)
 			}
 		case err := <-e:

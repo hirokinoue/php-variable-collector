@@ -73,7 +73,7 @@ func isPhpVariable(s string) bool {
 }
 
 func removeSymbolFromVariable(s string) string {
-	sub := regexp.MustCompile(`[\[\]\.,;!"')(:%+-]`).Split(s, -1)
+	sub := regexp.MustCompile(`[\[\].,;!"')(:%+-]`).Split(s, -1)
 	return sub[0]
 }
 

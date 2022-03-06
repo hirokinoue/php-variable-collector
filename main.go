@@ -14,7 +14,7 @@ import (
 	"sync"
 )
 
-const OUTPUT_FILE_NAME = "variables.txt"
+const outputFileName = "variables.txt"
 
 func main() {
 	log.SetFlags(log.Llongfile)
@@ -50,7 +50,7 @@ func main() {
 	close(semaphore)
 
 	for _, v := range d.sortValue() {
-		err := writeFile(filepath.Join(outDir, OUTPUT_FILE_NAME), v)
+		err := writeFile(filepath.Join(outDir, outputFileName), v)
 		if err != nil {
 			log.Println(err)
 		}

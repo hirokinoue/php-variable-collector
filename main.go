@@ -5,13 +5,59 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"sort"
 	"strings"
 	"sync"
 )
+
+const OUTPUT_FILE_NAME = "variables.txt"
+
+func main() {
+	log.SetFlags(log.Llongfile)
+	inDir, outDir, exclude := parseFlags(os.Args[1:])
+	err := clearOutDir(outDir)
+	if err != nil {
+		log.Println(err)
+	}
+
+	d := newDict()
+	paths, err := phpFilePaths(inDir, exclude)
+	ch := make(chan []string, len(paths))
+	e := make(chan error)
+	semaphore := make(chan struct{}, runtime.NumCPU())
+	if err != nil {
+		log.Println(err)
+	}
+	for _, p := range paths {
+		go collectPhpVariable(p, ch, e, semaphore)
+	}
+	for i := 0; i < len(paths); i++ {
+		select {
+		case strings := <-ch:
+			for _, s := range strings {
+				d.add(s)
+			}
+		case err := <-e:
+			log.Println(err)
+		}
+	}
+	close(ch)
+	close(e)
+	close(semaphore)
+
+	for _, v := range d.sortValue() {
+		err := writeFile(filepath.Join(outDir, OUTPUT_FILE_NAME), v)
+		if err != nil {
+			log.Println(err)
+		}
+	}
+	fmt.Println("Done")
+}
 
 func isPhpFile(s string) bool {
 	return strings.Contains(s, ".php")

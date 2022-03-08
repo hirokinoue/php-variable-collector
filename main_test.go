@@ -7,6 +7,8 @@ import (
 	"reflect"
 	"runtime"
 	"testing"
+
+	"go.uber.org/goleak"
 )
 
 func Test_isPhpFile(t *testing.T) {
@@ -684,4 +686,8 @@ func Test_parseFlags_abnormal(t *testing.T) {
 			t.Errorf("parseFlags() %v, the type is %T, want *exec.ExitError", e, e)
 		})
 	}
+}
+func TestGoroutineLeak(t *testing.T) {
+	defer goleak.VerifyNone(t)
+	_ = createVariableDictionary("testdata", "")
 }

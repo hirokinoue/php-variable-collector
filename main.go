@@ -24,6 +24,18 @@ func main() {
 		log.Println(err)
 	}
 
+	d := createVariableDictionary(inDir, exclude)
+
+	for _, v := range d.sortValue() {
+		err := writeFile(filepath.Join(outDir, outputFileName), v)
+		if err != nil {
+			log.Println(err)
+		}
+	}
+	fmt.Println("Done")
+}
+
+func createVariableDictionary(inDir, exclude string) *dict {
 	d := newDict()
 	paths, err := phpFilePaths(inDir, exclude)
 	ch := make(chan []string, len(paths))
@@ -48,14 +60,7 @@ func main() {
 	close(ch)
 	close(e)
 	close(semaphore)
-
-	for _, v := range d.sortValue() {
-		err := writeFile(filepath.Join(outDir, outputFileName), v)
-		if err != nil {
-			log.Println(err)
-		}
-	}
-	fmt.Println("Done")
+	return d
 }
 
 func isPhpFile(s string) bool {

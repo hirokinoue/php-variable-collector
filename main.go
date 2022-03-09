@@ -38,12 +38,12 @@ func main() {
 func createVariableDictionary(inDir, exclude string) *dict {
 	d := newDict()
 	paths, err := phpFilePaths(inDir, exclude)
-	ch := make(chan []string, len(paths))
-	e := make(chan error)
-	semaphore := make(chan struct{}, runtime.NumCPU())
 	if err != nil {
 		log.Println(err)
 	}
+	ch := make(chan []string, len(paths))
+	e := make(chan error)
+	semaphore := make(chan struct{}, runtime.NumCPU())
 	for _, p := range paths {
 		go collectPhpVariable(p, ch, e, semaphore)
 	}

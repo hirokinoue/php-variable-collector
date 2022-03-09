@@ -12,6 +12,8 @@ import (
 	"sort"
 	"strings"
 	"sync"
+
+	"github.com/pkg/errors"
 )
 
 const outputFileName = "variables.txt"
@@ -21,18 +23,18 @@ func main() {
 	inDir, outDir, exclude := parseFlags(os.Args[1:])
 	err := clearOutDir(outDir)
 	if err != nil {
-		log.Println(err)
+		log.Printf("%+v", err)
 	}
 
 	d, err := createVariableDictionary(inDir, exclude)
 	if err != nil {
-		log.Println(err)
+		log.Printf("%+v", err)
 	}
 
 	for _, v := range d.sortValue() {
 		err := writeFile(filepath.Join(outDir, outputFileName), v)
 		if err != nil {
-			log.Println(err)
+			log.Printf("%+v", err)
 		}
 	}
 	fmt.Println("Done")
@@ -42,7 +44,7 @@ func createVariableDictionary(inDir, exclude string) (*dict, error) {
 	d := newDict()
 	paths, err := phpFilePaths(inDir, exclude)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, fmt.Sprintf("inDir: %v, exclude: %v", inDir, exclude))
 	}
 	ch := make(chan []string, len(paths))
 	e := make(chan error)
@@ -88,7 +90,7 @@ func removeSymbolFromVariable(s string) string {
 func filePaths(inDir, exclude string) ([]string, error) {
 	files, err := os.ReadDir(inDir)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, fmt.Sprintf("inDir: %v", inDir))
 	}
 
 	var paths []string
@@ -99,7 +101,7 @@ func filePaths(inDir, exclude string) ([]string, error) {
 		if f.IsDir() {
 			tmpPaths, err := filePaths(filepath.Join(inDir, f.Name()), exclude)
 			if err != nil {
-				return nil, err
+				return nil, errors.Wrap(err, fmt.Sprintf("inDir: %v, f.Name(): %v, exclude: %v", inDir, f.Name(), exclude))
 			}
 			paths = append(paths, tmpPaths...)
 			continue
@@ -112,7 +114,7 @@ func filePaths(inDir, exclude string) ([]string, error) {
 func phpFilePaths(inDir, exclude string) ([]string, error) {
 	paths, err := filePaths(inDir, exclude)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, fmt.Sprintf("inDir: %v, exclude: %v", inDir, exclude))
 	}
 	var phps []string
 	for _, p := range paths {
@@ -161,7 +163,7 @@ func collectPhpVariable(filePath string, ch chan<- []string, e chan<- error, sem
 	}()
 	f, err := os.Open(filePath)
 	if err != nil {
-		e <- err
+		e <- errors.Wrap(err, fmt.Sprintf("filePath: %v", filePath))
 		return
 	}
 	defer f.Close()
@@ -181,13 +183,13 @@ func collectPhpVariable(filePath string, ch chan<- []string, e chan<- error, sem
 func writeFile(outFilePath string, line string) error {
 	file, err1 := os.OpenFile(outFilePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err1 != nil {
-		return err1
+		return errors.Wrap(err1, fmt.Sprintf("outFilePath: %v", outFilePath))
 	}
 	defer file.Close()
 
 	_, err2 := file.WriteString(fmt.Sprintf("%s%s", line, "\n"))
 	if err2 != nil {
-		return err2
+		return errors.Wrap(err2, fmt.Sprintf("line: %v", line))
 	}
 	return nil
 }
@@ -195,12 +197,12 @@ func writeFile(outFilePath string, line string) error {
 func clearOutDir(outDir string) error {
 	paths, err := filePaths(outDir, "")
 	if err != nil {
-		return err
+		return errors.Wrap(err, fmt.Sprintf("outDir: %v", outDir))
 	}
 	for _, p := range paths {
 		err := os.Remove(p)
 		if err != nil {
-			return err
+			return errors.Wrap(err, fmt.Sprintf("path: %v", p))
 		}
 	}
 	return nil

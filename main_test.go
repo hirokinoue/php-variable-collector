@@ -689,5 +689,5 @@ func Test_parseFlags_abnormal(t *testing.T) {
 }
 func TestGoroutineLeak(t *testing.T) {
 	defer goleak.VerifyNone(t)
-	_ = createVariableDictionary("testdata", "")
+	_, _ = createVariableDictionary("testdata", "")
 }
